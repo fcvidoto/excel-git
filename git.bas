@@ -25,7 +25,7 @@ End Sub
 'Exporta todos os modulos
 Public Sub ExportSourceFiles()
   
-  Dim destPath As String: destPath = ActiveWorkbook.FullName
+  Dim destPath As String: destPath = ActiveWorkbook.Path
   Dim component As VBComponent
   
   For Each component In Application.VBE.ActiveVBProject.VBComponents
@@ -34,7 +34,7 @@ Public Sub ExportSourceFiles()
        component.Type = vbext_ct_MSForm Or _
        component.Type = vbext_ct_Document) And _
        Not component.Name = "git" Then
-          component.Export destPath & component.Name & ToFileExtension(component.Type)
+         component.Export destPath & "\" & component.Name & ToFileExtension(component.Type)
     End If
   Next
 End Sub
