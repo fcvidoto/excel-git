@@ -1,21 +1,26 @@
 Attribute VB_Name = "git"
 Option Explicit
 
+'Referencias
+'Microsoft Visual Basic for Applications Extensibility 5.3
+
 '-------------------------------------------------------
 'No evento dos botoes da Ribbon
-Public Sub exportarModulos_onAction(Control As IRibbonControl)
+Public Sub exportarModulos_onAction()
   Call ExportSourceFiles
   MsgBox "Modulos Exportados", vbInformation
 End Sub
-Public Sub importarModulos_onAction(Control As IRibbonControl)
-  If Not ActiveWorkbook.FullName Like "*\*" Then
+Public Sub importarModulos_onAction()
+  If Not CurrentProject.FullName Like "*\*" Then
     MsgBox "Operacao cancelada. Salve a planilha primeiro", vbInformation
     Exit Sub
   End If
-  Call ImportaModulos
-  MsgBox "Modulos Importados", vbInformation
+  If MsgBox("Importar modulos?") = vbYes Then
+    Call ImportaModulos
+    MsgBox "Modulos Importados", vbInformation
+  End If
 End Sub
-Public Sub excluirModulos_onAction(Control As IRibbonControl)
+Public Sub excluirModulos_onAction()
   If MsgBox("Deseja excluir todos os modulos VBA? Operacao irreversivel", vbYesNo) = vbYes Then
     Call ExcluirModulos
     MsgBox "Modulos Excluidos", vbInformation
@@ -25,7 +30,7 @@ End Sub
 'Exporta todos os modulos
 Public Sub ExportSourceFiles()
   
-  Dim destPath As String: destPath = ActiveWorkbook.Path
+  Dim destPath As String: destPath = CurrentProject.path
   Dim component As VBComponent
   
   For Each component In Application.VBE.ActiveVBProject.VBComponents
@@ -33,8 +38,8 @@ Public Sub ExportSourceFiles()
        component.Type = vbext_ct_StdModule Or _
        component.Type = vbext_ct_MSForm Or _
        component.Type = vbext_ct_Document) And _
-       Not component.Name = "git" Then
-         component.Export destPath & "\" & component.Name & ToFileExtension(component.Type)
+       Not component.name = "git" Then
+         component.Export destPath & "\" & component.name & ToFileExtension(component.Type)
     End If
   Next
 End Sub
@@ -61,9 +66,9 @@ End Function
 'Importa todos os arquivos para o projeto
 Public Sub ImportaModulos()
 
-  Dim currentPath As String: currentPath = Left(ActiveWorkbook.FullName, InStr(1, ActiveWorkbook.FullName, ActiveWorkbook.Name) - 1)
+  Dim currentPath As String: currentPath = Left(CurrentProject.FullName, InStr(1, CurrentProject.FullName, CurrentProject.name) - 1)
   Dim fso As FileSystemObject: Set fso = New FileSystemObject
-  Dim pasta As Folder: Set pasta = fso.GetFolder(currentPath)
+  Dim pasta As folder: Set pasta = fso.GetFolder(currentPath)
   Dim arquivo As File
   Dim modulo As VBComponent
   Dim nomeModulo As String
@@ -72,21 +77,21 @@ Public Sub ImportaModulos()
   'Itera por todos os modulos da pasta
   For Each arquivo In pasta.Files
   
-    If Not arquivo.Name Like "*.xls" And _
-       Not arquivo.Name Like "*.xlsm" And _
-       Not arquivo.Name Like "*.xlam" And _
-       Not arquivo.Name Like "*git.bas" And _
-       (Not arquivo.Name Like "*Sheet##" And Not arquivo.Name Like "*Sheet#") And _
-       Not arquivo.Name Like "*ThisWorkbook*" And _
-       Not arquivo.Name Like "*.log" And _
-       Not arquivo.Name Like "*.frx" Then
+    If Not arquivo.name Like "*.xls" And _
+       Not arquivo.name Like "*.xlsm" And _
+       Not arquivo.name Like "*.xlam" And _
+       Not arquivo.name Like "*git.bas" And _
+       (Not arquivo.name Like "*Sheet##" And Not arquivo.name Like "*Sheet#") And _
+       Not arquivo.name Like "*ThisWorkbook*" And _
+       Not arquivo.name Like "*.log" And _
+       Not arquivo.name Like "*.frx" Then
        
-        nomeModulo = Mid(arquivo.Name, Len(ActiveWorkbook.Name) + 1, 300)
+        nomeModulo = Mid(arquivo.name, Len(CurrentProject.name) + 1, 300)
         nomeModulo = Mid(nomeModulo, 1, InStr(1, nomeModulo, ".") - 1)
         
         'Itera pelo modulos do projeto ** Exclui o modulo !
         For Each modulo In Application.VBE.ActiveVBProject.VBComponents
-          If (nomeModulo = modulo.Name) And _
+          If (nomeModulo = modulo.name) And _
               Not nomeModulo Like "*.frx" And Not nomeModulo Like "*.log" Then
             moduloEncontrado = True
             
@@ -94,7 +99,7 @@ Public Sub ImportaModulos()
             Call Application.VBE.ActiveVBProject.VBComponents.Remove(modulo)
             
             'Importa o modulo
-            Call Application.VBE.ActiveVBProject.VBComponents.Import(ActiveWorkbook.Path & "\" & arquivo.Name)
+            Call Application.VBE.ActiveVBProject.VBComponents.Import(CurrentProject.path & "\" & arquivo.name)
           End If
         Next modulo
                
@@ -102,7 +107,7 @@ Public Sub ImportaModulos()
         If moduloEncontrado = False And _
            Not nomeModulo Like "*.frx" And Not nomeModulo Like "*.log" Then
             'Importa o modulo
-            Call Application.VBE.ActiveVBProject.VBComponents.Import(ActiveWorkbook.Path & "\" & arquivo.Name)
+            Call Application.VBE.ActiveVBProject.VBComponents.Import(CurrentProject.path & "\" & arquivo.name)
         End If
         
         'Valor default da variavel
@@ -121,7 +126,7 @@ Public Sub ExcluirModulos()
     If (component.Type = vbext_ct_ClassModule Or _
        component.Type = vbext_ct_StdModule Or _
        component.Type = vbext_ct_MSForm) And _
-       Not component.Name = "git" Then
+       Not component.name = "git" Then
         'component.Export destPath & component.Name & ToFileExtension(component.Type)
         Call Application.VBE.ActiveVBProject.VBComponents.Remove(component)
     End If
